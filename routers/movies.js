@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { Movie, validate } = require("../models/movie");
 const genres = require("./genres");
-const auth = require('../middleware/auth');
+const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 
 async function getMovies() {
@@ -12,8 +12,8 @@ async function getMovies() {
 async function findByIdIn(ids) {
   return await Movie.find({
     _id: {
-      $in: ids
-    }
+      $in: ids,
+    },
   }).select();
 }
 
@@ -28,10 +28,10 @@ async function createMovie(movie) {
     title: movie.title,
     genre: {
       _id: theGenre._id,
-      name: theGenre.name
+      name: theGenre.name,
     },
     numberInStock: movie.numberInStock,
-    dailyRentalRate: movie.dailyRentalRate
+    dailyRentalRate: movie.dailyRentalRate,
   }).save();
 }
 
@@ -49,11 +49,11 @@ async function updateMovie(id, updateObject) {
         title: updateObject.title,
         genre: {
           _id: theGenre._id,
-          name: theGenre.name
+          name: theGenre.name,
         },
         numberInStock: updateObject.numberInStock,
-        dailyRentalRate: updateObject.dailyRentalRate
-      }
+        dailyRentalRate: updateObject.dailyRentalRate,
+      },
     },
     { new: true }
   );
@@ -61,8 +61,8 @@ async function updateMovie(id, updateObject) {
 
 router.get("/", async (req, res) => {
   getMovies()
-    .then(Movie => res.send(Movie))
-    .catch(err =>
+    .then((Movie) => res.send(Movie))
+    .catch((err) =>
       logServerErrorAndRespond(err, `Could not get all Movies`, res)
     );
 });
@@ -70,6 +70,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const movie = await Movie.findById(req.params.id);
+    console.log(req.params.id);
     if (!movie)
       return res
         .status(404)
@@ -86,14 +87,14 @@ router.get("/:id", async (req, res) => {
 
 router.delete("/:id", [auth, admin], (req, res) => {
   Movie.findByIdAndRemove(req.params.id)
-    .then(movie => {
+    .then((movie) => {
       if (!movie)
         return res
           .status(404)
           .send(`A movie with id ${req.params.id} was not found!`);
       res.send(movie);
     })
-    .catch(err => {
+    .catch((err) => {
       logServerErrorAndRespond(
         err,
         `Error trying to delete movie with id: ${req.params.id}`,
@@ -107,12 +108,12 @@ function logServerErrorAndRespond(err, friendlyMessage, res, statusCode = 500) {
   res.status(statusCode).send(`${friendlyMessage}: ${err.message}`);
 }
 
-router.put("/:id", auth,  (req, res) => {
+router.put("/:id", auth, (req, res) => {
   const { error } = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
   Movie.find({ title: req.body.title })
-    .then(matchedMovie => {
+    .then((matchedMovie) => {
       if (
         matchedMovie &&
         matchedMovie.length > 0 &&
@@ -123,14 +124,14 @@ router.put("/:id", auth,  (req, res) => {
           .send("Another movie with this title already exists");
 
       updateMovie(req.params.id, req.body)
-        .then(updated => {
+        .then((updated) => {
           if (!updated)
             return res
               .status(404)
               .send(`A movie with id ${req.params.id} was not found!`);
           res.send(updated);
         })
-        .catch(err => {
+        .catch((err) => {
           logServerErrorAndRespond(
             err,
             `Error trying to update movie with id: ${req.params.id}`,
@@ -138,7 +139,7 @@ router.put("/:id", auth,  (req, res) => {
           );
         });
     })
-    .catch(err => {
+    .catch((err) => {
       logServerErrorAndRespond(err, `Error trying to update movie`, res);
     });
 
@@ -150,21 +151,21 @@ router.post("/", auth, (req, res) => {
   if (error) return res.status(400).send(error.details[0].message);
 
   Movie.find({ title: req.body.title })
-    .then(matchedMovie => {
+    .then((matchedMovie) => {
       if (matchedMovie && matchedMovie.length > 0)
         return res
           .status(400)
           .send("Another movie with this title already exists");
 
       createMovie(req.body)
-        .then(newMovie => {
+        .then((newMovie) => {
           res.send(newMovie);
         })
-        .catch(err => {
+        .catch((err) => {
           logServerErrorAndRespond(err, `Error trying to create movie`, res);
         });
     })
-    .catch(err => {
+    .catch((err) => {
       logServerErrorAndRespond(err, `Error trying to create movie`, res);
     });
 });
